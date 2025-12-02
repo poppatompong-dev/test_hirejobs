@@ -436,10 +436,11 @@ export default function App() {
       return matchesSearch && matchesFilter;
   });
 
-  // --- UI COMPONENTS ---
+   // --- UI COMPONENTS ---
+  // ✅ แก้ไข: เพิ่มความสูงเป็น h-[28px], เปลี่ยน overflow-hidden เป็น overflow-visible, ปรับ leading
   const DottedLine = ({ text, width = 'flex-1', center = false }) => (
-    <div className={`${width} border-b-[1px] border-dotted border-black relative h-[22px] flex items-end ${center ? 'justify-center' : 'justify-start'} px-1`}>
-      <span className="text-blue-900 font-medium whitespace-nowrap overflow-hidden text-ellipsis leading-none -translate-y-[2px]" style={{fontFamily: 'Sarabun, sans-serif', fontSize: '14px'}}>
+    <div className={`${width} border-b-[1px] border-dotted border-black relative h-[28px] flex items-end ${center ? 'justify-center' : 'justify-start'} px-1`}>
+      <span className="text-blue-900 font-bold whitespace-nowrap overflow-visible leading-normal -translate-y-[2px]" style={{fontFamily: 'Sarabun, sans-serif', fontSize: '15px'}}>
         {typeof text === 'string' || typeof text === 'number' ? text : ''}
       </span>
     </div>
