@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+}
+
+/* Print Styles */
+@media print {
+  @page { margin: 0; size: A4; }
+  body { -webkit-print-color-adjust: exact; }
+  .no-print { display: none !important; }
+  .page-break { page-break-after: always; }
+}
