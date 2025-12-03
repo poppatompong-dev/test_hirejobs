@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sarabun: ['Sarabun', 'sans-serif'],
+        // เปลี่ยนชื่อคลาสเป็น kanit
+        kanit: ['Kanit', 'sans-serif'],
       },
     },
   },
