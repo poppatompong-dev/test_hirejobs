@@ -1,0 +1,202 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #00843D;
+  --color-primary-dark: #006B31;
+  --color-primary-light: #00A84D;
+  --color-primary-50: #E6F5ED;
+  --color-primary-100: #CCE9DB;
+  --color-primary-200: #99D4B7;
+  --color-primary-700: #005A29;
+  --color-accent: #D4AF37;
+  --color-accent-light: #E8C84A;
+  --color-surface: #F8FAF9;
+  --color-surface-dark: #0F1A14;
+  --color-card: #FFFFFF;
+  --color-card-hover: #F0F7F3;
+  --color-danger: #DC2626;
+  --color-warning: #F59E0B;
+  --color-success: #059669;
+  --font-family-sans: 'Sarabun', sans-serif;
+}
+
+/* ── BASE LAYER: reset that won't override utilities ── */
+@layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-family-sans);
+    background-color: var(--color-surface);
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  html.dark body {
+    background-color: #0a0f0d;
+    color: #e8e8e8;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  html.dark ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
+  }
+}
+
+/* ── UTILITY LAYER: custom utilities ── */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ── ANIMATIONS (unlayered is ok here — they don't conflict) ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 132, 61, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(0, 132, 61, 0.6);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+  }
+}
