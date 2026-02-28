@@ -9,7 +9,8 @@ import {
     LayoutDashboard, Users, Briefcase, Settings, LogOut, Search, FileSpreadsheet,
     Eye, CheckCircle2, XCircle, AlertTriangle, FileText, Printer, Trash2,
     Plus, Edit3, ToggleLeft, ToggleRight, ChevronRight, Menu, X, Clock,
-    BarChart3, Filter, RefreshCw, Download, ChevronDown, Globe
+    BarChart3, Filter, RefreshCw, Download, ChevronDown, Globe,
+    StickyNote, CalendarClock, CheckSquare, Square, Settings2
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -42,16 +43,38 @@ export default function AdminDashboard() {
     const [generatingPdf, setGeneratingPdf] = useState(false)
     const cardRef = useRef(null)
     // Position form
-    const [posForm, setPosForm] = useState({ title: '', department: '', is_active: true })
+    const [posForm, setPosForm] = useState({ title: '', department: '', is_active: true, quota: '', salary_range: '', requirements: '', open_date: '', close_date: '' })
     const [editingPos, setEditingPos] = useState(null)
     // Stats
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0, editRequested: 0 })
+    // Bulk selection
+    const [selectedIds, setSelectedIds] = useState(new Set())
+    // Admin notes
+    const [adminNote, setAdminNote] = useState('')
+    const [savingNote, setSavingNote] = useState(false)
+    // Settings
+    const [settingsForm, setSettingsForm] = useState({ open_date: '', close_date: '', max_per_position: '' })
+    const [settingsSaved, setSettingsSaved] = useState(false)
+    // Data masking
+    const [revealedIds, setRevealedIds] = useState(new Set())
 
     useEffect(() => {
         if (sessionStorage.getItem('admin_auth') !== 'true') navigate('/admin')
     }, [navigate])
 
-    useEffect(() => { fetchData() }, [])
+    useEffect(() => {
+        fetchData()
+        fetchAuditLogs()
+
+        // Supabase Realtime Listener for new/updated applications
+        const channel = supabase.channel('applications_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'applications' }, (payload) => {
+                fetchData() // Refresh data on any change
+            })
+            .subscribe()
+
+        return () => { supabase.removeChannel(channel) }
+    }, [])
 
     async function fetchData() {
         setLoading(true)
@@ -129,6 +152,23 @@ export default function AdminDashboard() {
         await writeAuditLog('delete_position', posId); fetchData()
     }
 
+    // ── Data Masking ──
+    const toggleReveal = async (appId) => {
+        setRevealedIds(prev => {
+            const n = new Set(prev)
+            if (n.has(appId)) {
+                n.delete(appId)
+            } else {
+                n.add(appId)
+                // Log when admin reveals masked data
+                writeAuditLog('reveal_data', appId, { message: 'Viewed masked citizen ID & phone' })
+            }
+            return n
+        })
+    }
+    const maskId = (id) => id ? `${id[0]}-${id.slice(1, 5)}**-*****-**-${id[12]}` : '-'
+    const maskPhone = (phone) => phone ? `${phone.slice(0, 3)}-***-${phone.slice(6)}` : '-'
+
     async function handleTogglePosition(pos) {
         await supabase.from('positions').update({ is_active: !pos.is_active }).eq('id', pos.id); fetchData()
     }
@@ -162,6 +202,15 @@ export default function AdminDashboard() {
     // ── Excel ──
     const handleExportExcel = () => exportToExcel(filteredApps, positions, 'ผู้สมัครงาน')
 
+    // ── Admin Notes ──
+    async function handleSaveNote(appId) {
+        setSavingNote(true)
+        await supabase.from('applications').update({ admin_notes: adminNote }).eq('id', appId)
+        await writeAuditLog('add_note', appId, { note: adminNote })
+        setSavingNote(false)
+        fetchData()
+    }
+
     // ── Helpers ──
     const getPos = (posId) => positions.find(p => p.id === posId)
     const filteredApps = applications.filter(app => {
@@ -174,6 +223,35 @@ export default function AdminDashboard() {
         return true
     })
 
+    // ── Bulk Selection ──
+    const toggleSelect = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+    const toggleSelectAll = () => {
+        const approvedIds = filteredApps.filter(a => a.status === 'approved').map(a => a.id)
+        if (approvedIds.every(id => selectedIds.has(id))) setSelectedIds(new Set())
+        else setSelectedIds(new Set(approvedIds))
+    }
+    const selectedApps = filteredApps.filter(a => selectedIds.has(a.id))
+
+    // ── Bulk Print (open each card modal sequentially) ──
+    const handleBulkPrint = async () => {
+        for (const app of selectedApps) {
+            await handleGenerateCard(app)
+        }
+    }
+
+    // ── Settings ──
+    async function handleSaveSettings() {
+        localStorage.setItem('uthai_admin_settings', JSON.stringify(settingsForm))
+        setSettingsSaved(true)
+        setTimeout(() => setSettingsSaved(false), 2000)
+    }
+
+    // Load settings on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('uthai_admin_settings')
+        if (saved) try { setSettingsForm(JSON.parse(saved)) } catch { }
+    }, [])
+
     const handleLogout = () => { sessionStorage.removeItem('admin_auth'); navigate('/admin') }
 
     // ── NAV ITEMS ──
@@ -182,6 +260,7 @@ export default function AdminDashboard() {
         { key: 'applicants', label: 'ผู้สมัครงาน', icon: Users, badge: stats.pending > 0 ? stats.pending : null },
         { key: 'positions', label: 'ตำแหน่งงาน', icon: Briefcase, badge: positions.length },
         { key: 'audit', label: 'ประวัติการใช้งาน', icon: Clock },
+        { key: 'settings', label: 'ตั้งค่าระบบ', icon: Settings2 },
     ]
 
     if (loading) return (
@@ -216,8 +295,8 @@ export default function AdminDashboard() {
                             key={item.key}
                             onClick={() => { setActiveSection(item.key); if (item.key === 'audit') fetchAuditLogs() }}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${activeSection === item.key
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                                 }`}
                         >
                             <item.icon className={`w-5 h-5 flex-shrink-0 ${activeSection === item.key ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'}`} />
@@ -388,12 +467,58 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             )}
+                            {/* Applicants-per-Position Bar Chart */}
+                            {positions.length > 0 && (
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                    <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <BarChart3 className="w-4 h-4 text-violet-500" />
+                                        สัดส่วนผู้สมัครตามตำแหน่ง
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {positions.map(pos => {
+                                            const count = applications.filter(a => a.position_id === pos.id).length
+                                            const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0
+                                            return (
+                                                <div key={pos.id}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-xs text-gray-600 truncate max-w-xs">{pos.title} — {pos.department}</span>
+                                                        <span className="text-xs font-bold text-gray-700 ml-2">{count} คน</span>
+                                                    </div>
+                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500"
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                    {stats.total === 0 && <p className="text-gray-400 text-sm text-center py-4">ยังไม่มีผู้สมัคร</p>}
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {/* ═══ SECTION: Applicants ═══ */}
                     {activeSection === 'applicants' && (
                         <div className="space-y-4">
+                            {/* Bulk Action Toolbar */}
+                            {selectedIds.size > 0 && (
+                                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 flex items-center justify-between gap-4">
+                                    <span className="text-sm font-medium text-primary">
+                                        เลือก {selectedIds.size} รายการ (มีสิทธิ์สอบ)
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-50">
+                                            ยกเลิกการเลือก
+                                        </button>
+                                        <button onClick={handleBulkPrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-dark">
+                                            <Printer className="w-3.5 h-3.5" /> พิมพ์บัตรสอบทั้งหมด ({selectedIds.size})
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             {/* Toolbar */}
                             <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-3">
                                 <div className="flex flex-col sm:flex-row gap-3">
@@ -435,6 +560,14 @@ export default function AdminDashboard() {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="bg-gray-50 border-b border-gray-200">
+                                                <th className="px-4 py-3">
+                                                    <button onClick={toggleSelectAll} title="เลือกทั้งหมดที่มีสิทธิ์สอบ">
+                                                        {filteredApps.filter(a => a.status === 'approved').every(a => selectedIds.has(a.id)) && filteredApps.some(a => a.status === 'approved')
+                                                            ? <CheckSquare className="w-4 h-4 text-primary" />
+                                                            : <Square className="w-4 h-4 text-gray-400" />
+                                                        }
+                                                    </button>
+                                                </th>
                                                 {['#', 'ชื่อ-สกุล', 'เลขบัตร', 'ตำแหน่ง / สังกัด', 'สถานะ', 'วันที่สมัคร', 'การดำเนินการ'].map(h => (
                                                     <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                                                 ))}
@@ -442,13 +575,22 @@ export default function AdminDashboard() {
                                         </thead>
                                         <tbody>
                                             {filteredApps.length === 0 ? (
-                                                <tr><td colSpan={7} className="text-center py-16 text-gray-400">
+                                                <tr><td colSpan={8} className="text-center py-16 text-gray-400">
                                                     <FileText className="w-12 h-12 mx-auto mb-3 text-gray-200" />ไม่พบข้อมูลใบสมัคร
                                                 </td></tr>
                                             ) : filteredApps.map((app, idx) => {
                                                 const pos = getPos(app.position_id)
                                                 return (
-                                                    <tr key={app.id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
+                                                    <tr key={app.id} className={`border-b border-gray-50 hover:bg-primary-50/30 transition-colors ${selectedIds.has(app.id) ? 'bg-primary/5' : ''}`}>
+                                                        <td className="px-4 py-3">
+                                                            {app.status === 'approved' && (
+                                                                <button onClick={() => toggleSelect(app.id)}>
+                                                                    {selectedIds.has(app.id)
+                                                                        ? <CheckSquare className="w-4 h-4 text-primary" />
+                                                                        : <Square className="w-4 h-4 text-gray-300" />}
+                                                                </button>
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-3 text-sm text-gray-400">{idx + 1}</td>
                                                         <td className="px-4 py-3">
                                                             <p className="text-sm font-semibold text-gray-800">{app.full_name}</p>
@@ -504,6 +646,7 @@ export default function AdminDashboard() {
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">#</th>
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">ตำแหน่ง</th>
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">สังกัด</th>
+                                            <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">จำนวนรับ / อัตรา</th>
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">ผู้สมัคร</th>
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">สถานะ</th>
                                             <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase">การดำเนินการ</th>
@@ -512,23 +655,37 @@ export default function AdminDashboard() {
                                     <tbody>
                                         {positions.map((pos, idx) => {
                                             const appCount = applications.filter(a => a.position_id === pos.id).length
+                                            const isExpired = pos.close_date && new Date(pos.close_date) < new Date()
                                             return (
                                                 <tr key={pos.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                                     <td className="px-5 py-3 text-sm text-gray-400">{idx + 1}</td>
-                                                    <td className="px-5 py-3 text-sm font-semibold text-gray-800">{pos.title}</td>
+                                                    <td className="px-5 py-3">
+                                                        <p className="text-sm font-semibold text-gray-800">{pos.title}</p>
+                                                        {pos.salary_range && <p className="text-xs text-emerald-600 mt-0.5">อัตรา: {pos.salary_range}</p>}
+                                                        {pos.close_date && <p className={`text-xs mt-0.5 ${isExpired ? 'text-red-500' : 'text-amber-600'}`}>ปิดรับ: {new Date(pos.close_date).toLocaleDateString('th-TH')}{isExpired ? ' (หมดเขตแล้ว)' : ''}</p>}
+                                                    </td>
                                                     <td className="px-5 py-3 text-sm text-gray-600">{pos.department}</td>
-                                                    <td className="px-5 py-3"><span className="text-sm font-bold text-primary">{appCount}</span> <span className="text-xs text-gray-400">คน</span></td>
+                                                    <td className="px-5 py-3">
+                                                        <div className="text-sm">
+                                                            <span className="font-bold text-primary">{appCount}</span>
+                                                            {pos.quota && <span className="text-gray-400"> / {pos.quota} อัตรา</span>}
+                                                        </div>
+                                                        {pos.quota && (
+                                                            <div className="h-1.5 bg-gray-100 rounded-full mt-1 w-20 overflow-hidden">
+                                                                <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min((appCount / parseInt(pos.quota)) * 100, 100)}%` }} />
+                                                            </div>
+                                                        )}
+                                                    </td>
                                                     <td className="px-5 py-3">
                                                         <button onClick={() => handleTogglePosition(pos)}
-                                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${pos.is_active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'
-                                                                }`}>
+                                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${pos.is_active !== false ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                                                             {pos.is_active !== false ? <><ToggleRight className="w-4 h-4" /> เปิดรับ</> : <><ToggleLeft className="w-4 h-4" /> ปิด</>}
                                                         </button>
                                                     </td>
                                                     <td className="px-5 py-3">
                                                         <div className="flex items-center gap-2">
                                                             <IconBtn icon={Edit3} tip="แก้ไข" color="blue"
-                                                                onClick={() => { setEditingPos(pos); setPosForm({ title: pos.title, department: pos.department, is_active: pos.is_active }); setShowPosModal(true) }} />
+                                                                onClick={() => { setEditingPos(pos); setPosForm({ title: pos.title, department: pos.department, is_active: pos.is_active, quota: pos.quota || '', salary_range: pos.salary_range || '', requirements: pos.requirements || '', open_date: pos.open_date || '', close_date: pos.close_date || '' }); setShowPosModal(true) }} />
                                                             <IconBtn icon={Trash2} tip="ลบ" color="red" onClick={() => handleDeletePosition(pos.id)} />
                                                         </div>
                                                     </td>
@@ -569,6 +726,55 @@ export default function AdminDashboard() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══ SECTION: Settings ═══ */}
+                    {activeSection === 'settings' && (
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+                                    <CalendarClock className="w-5 h-5 text-primary" />
+                                    ช่วงเวลารับสมัครงาน (ภาพรวม)
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 mb-1.5">วันเปิดรับสมัคร</label>
+                                        <input type="date" value={settingsForm.open_date}
+                                            onChange={e => setSettingsForm(p => ({ ...p, open_date: e.target.value }))}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 mb-1.5">วันปิดรับสมัคร</label>
+                                        <input type="date" value={settingsForm.close_date}
+                                            onChange={e => setSettingsForm(p => ({ ...p, close_date: e.target.value }))}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 mb-1.5">จำนวนรับสูงสุดต่อตำแหน่ง (คน)</label>
+                                        <input type="number" value={settingsForm.max_per_position} min="1"
+                                            onChange={e => setSettingsForm(p => ({ ...p, max_per_position: e.target.value }))}
+                                            placeholder="ไม่จำกัด"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                                    </div>
+                                </div>
+                                <div className="mt-5 flex items-center gap-3">
+                                    <button onClick={handleSaveSettings}
+                                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-dark transition-colors">
+                                        บันทึกการตั้งค่า
+                                    </button>
+                                    {settingsSaved && <span className="text-emerald-600 text-sm font-medium">✓ บันทึกแล้ว</span>}
+                                </div>
+                                {settingsForm.open_date && settingsForm.close_date && (
+                                    <div className="mt-4 p-4 bg-primary/5 rounded-xl text-sm text-primary">
+                                        ละเอียดปัจจุบัน: เปิดรับ {new Date(settingsForm.open_date).toLocaleDateString('th-TH', { dateStyle: 'long' })} — ปิด {new Date(settingsForm.close_date).toLocaleDateString('th-TH', { dateStyle: 'long' })}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700">
+                                <p className="font-semibold mb-1">⚠️ หมายเหตุ</p>
+                                <p>การตั้งค่านี้เก็บไว้ใน localStorage ไม่ได้แชร์ข้ามอุปกรณ์ หากต้องการควบคุมกำหนดเวลารับสมัครควรบันทึก open_date/close_date ในตาราง positions แต่ละรายการ (เพิ่มตำแหน่งใหม่)</p>
                             </div>
                         </div>
                     )}
@@ -636,16 +842,48 @@ export default function AdminDashboard() {
                     </h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">ชื่อตำแหน่ง</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">ชื่อตำแหน่ง <span className="text-red-400">*</span></label>
                             <input type="text" value={posForm.title} onChange={(e) => setPosForm(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder="เช่น พนักงานจ้างตามภารกิจ"
                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">สังกัด (กอง/สำนัก)</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">สังกัด (กอง/สำนัก) <span className="text-red-400">*</span></label>
                             <input type="text" value={posForm.department} onChange={(e) => setPosForm(prev => ({ ...prev, department: e.target.value }))}
                                 placeholder="เช่น สำนักปลัดเทศบาล"
                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">จำนวนรับ (อัตรา)</label>
+                                <input type="number" min="0" value={posForm.quota} onChange={e => setPosForm(p => ({ ...p, quota: e.target.value }))}
+                                    placeholder="ไม่จำกัด"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">อัตราค่าจ้าง</label>
+                                <input type="text" value={posForm.salary_range} onChange={e => setPosForm(p => ({ ...p, salary_range: e.target.value }))}
+                                    placeholder="เช่น 9,000 บาท/เดือน"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">วันเปิดรับสมัคร</label>
+                                <input type="date" value={posForm.open_date} onChange={e => setPosForm(p => ({ ...p, open_date: e.target.value }))}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">วันปิดรับสมัคร</label>
+                                <input type="date" value={posForm.close_date} onChange={e => setPosForm(p => ({ ...p, close_date: e.target.value }))}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">คุณสมบัติ (ย่อ)</label>
+                            <textarea value={posForm.requirements} onChange={e => setPosForm(p => ({ ...p, requirements: e.target.value }))}
+                                rows={3} placeholder="ระบุวุฒิการศึกษา หรือคุณสมบัติเฉพาะ..."
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm resize-none" />
                         </div>
                         <div className="flex gap-3 pt-2">
                             <button onClick={() => setShowPosModal(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium text-sm">ยกเลิก</button>
@@ -723,6 +961,31 @@ export default function AdminDashboard() {
                             })}
                         </div>
                     )}
+
+                    {/* Admin Notes */}
+                    <div className="border-t border-gray-100 pt-4 mt-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5 mb-2">
+                            <StickyNote className="w-3.5 h-3.5" /> บันทึกแอดมิน (ไม่แสดงต่อผู้สมัคร)
+                        </label>
+                        <textarea
+                            value={adminNote}
+                            onChange={e => setAdminNote(e.target.value)}
+                            rows={3}
+                            placeholder="บันทึกภายในสำหรับเจ้าหน้าที่เท่านั้น..."
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm resize-none"
+                        />
+                        {selectedApp.admin_notes && adminNote === '' && (
+                            <p className="text-xs text-gray-400 mt-1">บันทึกเดิม: {selectedApp.admin_notes}</p>
+                        )}
+                        <button
+                            onClick={() => handleSaveNote(selectedApp.id)}
+                            disabled={!adminNote.trim() || savingNote}
+                            className="mt-2 px-4 py-1.5 bg-gray-700 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-40 flex items-center gap-1.5"
+                        >
+                            {savingNote ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <StickyNote className="w-3 h-3" />}
+                            บันทึกนโอตส์
+                        </button>
+                    </div>
 
                     {/* Actions */}
                     {selectedApp.status === 'pending' && (

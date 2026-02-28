@@ -280,8 +280,15 @@ export default function ExamCardTemplate({ application, position, onReady }) {
                     <div style={{ marginBottom: '4px', letterSpacing: '1px' }}>............................................</div>
                     <div>เจ้าหน้าที่ออกบัตร</div>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ marginBottom: '4px', letterSpacing: '1px' }}>............................................</div>
+                <div style={{ textAlign: 'center', position: 'relative' }}>
+                    {application.signature ? (
+                        <div style={{ position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%)' }}>
+                            <img src={application.signature} alt="signature" style={{ height: '35px', objectFit: 'contain' }} crossOrigin="anonymous" />
+                        </div>
+                    ) : null}
+                    <div style={{ marginBottom: '4px', letterSpacing: '1px', color: application.signature ? 'transparent' : 'inherit' }}>
+                        ............................................
+                    </div>
                     <div>ลายมือชื่อผู้สมัครสอบ</div>
                 </div>
             </div>

@@ -51,18 +51,18 @@ export default function CheckStatus() {
     const statusInfo = result ? STATUS_MAP[result.status] || STATUS_MAP.pending : null
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50 dark:from-[#0a0f0d] dark:via-[#0f1a14] dark:to-[#0a0f0d]">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <header className="bg-white dark:bg-[#0f1a14] border-b border-gray-200 dark:border-[#1e2a24] sticky top-0 z-50">
                 <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <img src="/logo.png" alt="Logo" className="w-10 h-10" />
                         <div>
                             <p className="text-sm font-bold text-primary leading-tight">เทศบาลเมืองอุทัยธานี</p>
-                            <p className="text-xs text-gray-500">ระบบตรวจสอบสถานะการสมัคร</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">ระบบตรวจสอบสถานะการสมัคร</p>
                         </div>
                     </Link>
-                    <Link to="/" className="text-sm text-gray-500 hover:text-primary transition-colors flex items-center gap-1.5">
+                    <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-1.5">
                         <ArrowLeft className="w-4 h-4" /> กลับหน้าหลัก
                     </Link>
                 </div>
@@ -74,12 +74,12 @@ export default function CheckStatus() {
                     <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <Search className="w-8 h-8 text-primary" />
                     </div>
-                    <h1 className="text-2xl font-extrabold text-gray-800 mb-2">ตรวจสอบสถานะการสมัคร</h1>
-                    <p className="text-gray-500">กรอกเลขบัตรประชาชน 13 หลัก เพื่อตรวจสอบผลการสมัคร</p>
+                    <h1 className="text-2xl font-extrabold text-gray-800 dark:text-white mb-2">ตรวจสอบสถานะการสมัคร</h1>
+                    <p className="text-gray-500 dark:text-gray-400">กรอกเลขบัตรประชาชน 13 หลัก เพื่อตรวจสอบผลการสมัคร</p>
                 </div>
 
-                <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-6 border border-gray-100 mb-8">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">เลขบัตรประชาชน</label>
+                <form onSubmit={handleSearch} className="bg-white dark:bg-[#151f1a] rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-black/20 p-6 border border-gray-100 dark:border-[#1e2a24] mb-8">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">เลขบัตรประชาชน</label>
                     <div className="flex gap-3">
                         <input
                             type="text"
@@ -87,7 +87,7 @@ export default function CheckStatus() {
                             value={citizenId}
                             onChange={(e) => { setCitizenId(e.target.value.replace(/\D/g, '')); setError('') }}
                             placeholder="กรอกเลขบัตรประชาชน 13 หลัก"
-                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono text-lg tracking-widest transition-all"
+                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-[#1e2a24] bg-white dark:bg-[#0d1a12] text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono text-lg tracking-widest transition-all"
                         />
                         <button type="submit" disabled={loading}
                             className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center gap-2 disabled:opacity-50">
@@ -102,16 +102,16 @@ export default function CheckStatus() {
                 {result && statusInfo && (
                     <div className="animate-fade-in-up space-y-6">
                         {/* Status Card */}
-                        <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden`}>
+                        <div className={`bg-white dark:bg-[#151f1a] rounded-2xl shadow-lg dark:shadow-black/20 border border-gray-100 dark:border-[#1e2a24] overflow-hidden`}>
                             <div className={`p-6 bg-${statusInfo.color}-50 border-b border-${statusInfo.color}-100`}>
                                 <div className="flex items-center gap-4">
                                     <div className={`w-14 h-14 rounded-2xl bg-${statusInfo.color}-100 flex items-center justify-center`}>
                                         <statusInfo.icon className={`w-7 h-7 text-${statusInfo.color}-600`} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs text-gray-500 mb-1">สถานะปัจจุบัน</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">สถานะปัจจุบัน</p>
                                         <p className={`text-xl font-extrabold text-${statusInfo.color}-700`}>{statusInfo.label}</p>
-                                        <p className="text-sm text-gray-600 mt-0.5">{statusInfo.desc}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{statusInfo.desc}</p>
                                     </div>
                                 </div>
                             </div>
@@ -134,8 +134,8 @@ export default function CheckStatus() {
                                     ...(result.exam_number ? [['เลขประจำตัวสอบ', result.exam_number]] : []),
                                 ].map(([label, value]) => (
                                     <div key={label}>
-                                        <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                                        <p className="text-sm font-semibold text-gray-800">{value}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">{label}</p>
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{value}</p>
                                     </div>
                                 ))}
                             </div>

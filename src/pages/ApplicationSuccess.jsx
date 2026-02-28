@@ -5,9 +5,9 @@ export default function ApplicationSuccess() {
     const { fullName } = location.state || {}
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 dark:from-[#0a0f0d] dark:via-[#0f1a14] dark:to-[#0a0f0d] flex items-center justify-center p-4">
             <div className="max-w-lg w-full">
-                <div className="bg-white rounded-3xl shadow-2xl p-10 text-center border border-gray-100">
+                <div className="bg-white dark:bg-[#151f1a] rounded-3xl shadow-2xl dark:shadow-black/30 p-10 text-center border border-gray-100 dark:border-[#1e2a24]">
                     {/* Success animation */}
                     <div className="relative inline-flex items-center justify-center mb-8">
                         <div className="absolute w-24 h-24 bg-primary/10 rounded-full animate-ping" />
@@ -18,7 +18,7 @@ export default function ApplicationSuccess() {
                         </div>
                     </div>
 
-                    <h1 className="text-3xl font-extrabold text-gray-800 mb-3">
+                    <h1 className="text-3xl font-extrabold text-gray-800 dark:text-white mb-3">
                         ส่งใบสมัครสำเร็จ!
                     </h1>
 
@@ -28,15 +28,15 @@ export default function ApplicationSuccess() {
                         </p>
                     )}
 
-                    <p className="text-gray-500 mb-8 leading-relaxed">
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
                         ใบสมัครของท่านได้ถูกส่งเรียบร้อยแล้ว<br />
                         เจ้าหน้าที่จะดำเนินการตรวจสอบ<br />
                         และแจ้งผลให้ทราบในภายหลัง
                     </p>
 
-                    <div className="bg-primary-50 rounded-2xl p-5 mb-8 text-left">
+                    <div className="bg-primary-50 dark:bg-primary/10 rounded-2xl p-5 mb-8 text-left">
                         <h3 className="text-sm font-bold text-primary mb-2">📋 ขั้นตอนถัดไป</h3>
-                        <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                        <ol className="text-sm text-gray-600 dark:text-gray-300 space-y-2 list-decimal list-inside">
                             <li>เจ้าหน้าที่ตรวจสอบเอกสาร</li>
                             <li>ประกาศรายชื่อผู้มีสิทธิ์สอบ</li>
                             <li>รับบัตรประจำตัวสอบ</li>

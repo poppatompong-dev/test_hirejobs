@@ -35,6 +35,23 @@ export async function generateExamCard(cardElement, application) {
         const imgData = canvas.toDataURL('image/png', 1.0)
         doc.addImage(imgData, 'PNG', 5, 5, imgWidth, imgHeight)
 
+        // --- Watermark ---
+        doc.saveGraphicsState()
+        doc.setGState(new doc.GState({ opacity: 0.15 }))
+        doc.setTextColor(150, 150, 150)
+
+        // Load Thai font or fallback to basic font (jsPDF doesn't natively support Thai without custom VFS)
+        // Since it's just a simple watermark, we'll use english timestamp + simple thai if it renders, otherwise it might look like squares.
+        // Actually, jsPDF standard fonts DO NOT support Thai characters and setting a custom VFS is complex.
+        // I'll create a simple English timestamp watermark instead to guarantee it works.
+        const dateStr = new Date().toLocaleString('th-TH')
+        doc.setFontSize(30)
+        doc.text(`Uthai Thani Municipality - ${dateStr}`, imgWidth / 2, imgHeight / 2, {
+            align: 'center',
+            angle: 30
+        })
+        doc.restoreGraphicsState()
+
         // Save
         const name = application.full_name || 'applicant'
         const examNum = application.exam_number || '0000'

@@ -5,12 +5,14 @@ import StepPosition from '../components/wizard/StepPosition'
 import StepPersonalInfo from '../components/wizard/StepPersonalInfo'
 import StepEducation from '../components/wizard/StepEducation'
 import StepDocuments from '../components/wizard/StepDocuments'
+import StepSignature from '../components/wizard/StepSignature'
 
 const STEPS = [
     { label: 'เลือกตำแหน่ง', icon: '💼' },
     { label: 'ข้อมูลส่วนตัว', icon: '👤' },
     { label: 'การศึกษา', icon: '🎓' },
     { label: 'เอกสาร', icon: '📎' },
+    { label: 'ลงชื่อ', icon: '✍️' },
 ]
 
 // File security: allowed MIME types and max size
@@ -34,15 +36,37 @@ function generateUUID() {
     })
 }
 
+const DRAFT_KEY = 'uthai_application_draft'
+
 export default function ApplicationWizard() {
     const navigate = useNavigate()
     const [step, setStep] = useState(0)
-    const [formData, setFormData] = useState({})
+    const [formData, setFormData] = useState(() => {
+        try {
+            const saved = localStorage.getItem(DRAFT_KEY)
+            return saved ? JSON.parse(saved) : {}
+        } catch { return {} }
+    })
     const [files, setFiles] = useState({})
     const [errors, setErrors] = useState({})
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState('')
     const [cooldown, setCooldown] = useState(false)
+    const [hasDraft, setHasDraft] = useState(() => !!localStorage.getItem(DRAFT_KEY))
+
+    // Auto-save draft to localStorage on every formData change
+    useEffect(() => {
+        if (Object.keys(formData).length > 0) {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(formData))
+        }
+    }, [formData])
+
+    const clearDraft = () => {
+        localStorage.removeItem(DRAFT_KEY)
+        setHasDraft(false)
+        setFormData({})
+        setStep(0)
+    }
 
     // Check PDPA consent
     useEffect(() => {
@@ -102,6 +126,8 @@ export default function ApplicationWizard() {
             if (!files.photo) newErrors.photo = 'กรุณาอัปโหลดรูปถ่าย'
             if (!files.id_card) newErrors.id_card = 'กรุณาอัปโหลดสำเนาบัตรประชาชน'
             if (!files.transcript) newErrors.transcript = 'กรุณาอัปโหลดใบระเบียนผลการเรียน'
+        } else if (step === 4) {
+            if (!formData.signature) newErrors.signature = 'กรุณาลงลายมือชื่อก่อนส่งใบสมัคร'
         }
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
@@ -149,6 +175,7 @@ export default function ApplicationWizard() {
                     skills: formData.skills || null,
                     disability_type: formData.disability_type || null,
                     consent_at: consentAt,
+                    signature: formData.signature || null,
                 })
                 .select()
                 .single()
@@ -185,6 +212,7 @@ export default function ApplicationWizard() {
             }
 
             navigate('/success', { state: { applicationId: app.id, fullName: formData.full_name } })
+            localStorage.removeItem(DRAFT_KEY)
         } catch (err) {
             console.error('Submit error:', err)
             if (err.code === '23505') {
@@ -199,6 +227,23 @@ export default function ApplicationWizard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 dark:from-[#0a0f0d] dark:via-[#101a14] dark:to-[#0a0f0d]">
+            {/* Draft Banner */}
+            {hasDraft && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-2.5">
+                    <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                        <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                            <span>📝</span>
+                            พบข้อมูลที่กรอกค้างไว้จากครั้งที่แล้ว — กำลังกรอกข้อมูลต่อได้เลย
+                        </p>
+                        <button
+                            onClick={clearDraft}
+                            className="text-xs text-amber-600 dark:text-amber-400 hover:underline flex-shrink-0"
+                        >
+                            ลบข้อมูลและเริ่มใหม่
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <header className="bg-white/80 dark:bg-[#151f1a]/80 backdrop-blur-md border-b border-gray-200 dark:border-[#1e2a24] sticky top-0 z-50">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -226,10 +271,10 @@ export default function ApplicationWizard() {
                             <div className="flex flex-col items-center">
                                 <div
                                     className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-300 ${i < step
-                                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                            : i === step
-                                                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                        : i === step
+                                            ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
                                         }`}
                                 >
                                     {i < step ? (
@@ -255,6 +300,7 @@ export default function ApplicationWizard() {
                     {step === 1 && <StepPersonalInfo data={formData} onChange={updateForm} errors={errors} />}
                     {step === 2 && <StepEducation data={formData} onChange={updateForm} errors={errors} />}
                     {step === 3 && <StepDocuments files={files} onFileChange={handleFileChange} uploading={submitting} errors={errors} />}
+                    {step === 4 && <StepSignature data={formData} onChange={updateForm} errors={errors} />}
 
                     {submitError && (
                         <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-danger text-sm flex items-center gap-2">
@@ -303,8 +349,8 @@ export default function ApplicationWizard() {
                                 onClick={handleSubmit}
                                 disabled={submitting || cooldown}
                                 className={`flex items-center gap-2 px-8 py-3 font-bold rounded-xl shadow-lg transition-all duration-300 ${submitting || cooldown
-                                        ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-primary to-primary-light text-white hover:shadow-primary/30 hover:scale-105'
+                                    ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-primary to-primary-light text-white hover:shadow-primary/30 hover:scale-105'
                                     }`}
                             >
                                 {submitting ? (

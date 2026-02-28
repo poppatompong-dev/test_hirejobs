@@ -12,6 +12,7 @@
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.1.0",
     "@supabase/supabase-js": "^2.49.0",
+    "browser-image-compression": "^2.0.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.575.0",
@@ -19,6 +20,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.3.0",
+    "react-signature-canvas": "^1.1.0-alpha.2",
+    "thai-address-autocomplete-react": "^1.2.2",
     "three": "^0.173.0",
     "xlsx": "^0.18.5"
   },

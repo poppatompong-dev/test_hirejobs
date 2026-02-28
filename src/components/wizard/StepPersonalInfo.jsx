@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { InputThaiAddress } from 'thai-address-autocomplete-react'
 
 // Thai 13-digit citizen ID checksum validation
 function validateCitizenId(id) {
@@ -26,6 +27,55 @@ function calculateAge(birthDateStr) {
 export default function StepPersonalInfo({ data, onChange, errors }) {
     const age = useMemo(() => calculateAge(data.birth_date), [data.birth_date])
     const idValid = useMemo(() => data.citizen_id ? validateCitizenId(data.citizen_id) : null, [data.citizen_id])
+
+    // Address splitting for autocomplete
+    const [addrParts, setAddrParts] = useState({
+        details: '', // บ้านเลขที่ หมู่ ซอย ถนน
+        tumbol: '',
+        amphoe: '',
+        province: '',
+        zipcode: ''
+    })
+
+    // Parse existing address on mount
+    useEffect(() => {
+        if (data.address && !addrParts.details) {
+            // Attempt simple parsing if editing existing data
+            const parts = data.address.split(' ต.')
+            if (parts.length > 1) {
+                setAddrParts(prev => ({ ...prev, details: parts[0] }))
+            } else {
+                setAddrParts(prev => ({ ...prev, details: data.address }))
+            }
+        }
+    }, [])
+
+    const handleAddressSelect = (addressObj) => {
+        const newParts = {
+            ...addrParts,
+            tumbol: addressObj.district,
+            amphoe: addressObj.amphoe,
+            province: addressObj.province,
+            zipcode: addressObj.zipcode
+        }
+        setAddrParts(newParts)
+        // Combine into standard string format for compatibility
+        const fullAddr = `${newParts.details} ต.${newParts.tumbol} อ.${newParts.amphoe} จ.${newParts.province} ${newParts.zipcode}`.trim()
+        onChange({ address: fullAddr })
+    }
+
+    const handleDetailsChange = (e) => {
+        const d = e.target.value
+        setAddrParts(p => ({ ...p, details: d }))
+        const fullAddr = `${d} ต.${addrParts.tumbol} อ.${addrParts.amphoe} จ.${addrParts.province} ${addrParts.zipcode}`.trim()
+        onChange({ address: fullAddr.replace(/ต. อ. จ. /g, '') }) // clean if empty
+    }
+
+    const handleThaiAddrChange = (field) => (e) => {
+        const val = e.target.value
+        setAddrParts(p => ({ ...p, [field]: val }))
+        // Not calling onChange yet, wait for user to select from dropdown to get full string
+    }
 
     const inputClass = (field) =>
         `w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${errors?.[field]
@@ -134,17 +184,62 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                 </div>
 
                 {/* Address */}
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                {/* Address Group */}
+                <div className="md:col-span-2 bg-gray-50/50 p-5 rounded-2xl border border-gray-100 mb-2">
+                    <label className="block text-[15px] font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
                         ที่อยู่ปัจจุบัน <span className="text-danger">*</span>
                     </label>
-                    <textarea
-                        rows={3}
-                        placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์"
-                        value={data.address || ''}
-                        onChange={(e) => onChange({ address: e.target.value })}
-                        className={inputClass('address')}
-                    />
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">บ้านเลขที่ / หมู่ / ซอย / ถนน</label>
+                            <input
+                                type="text"
+                                placeholder="เช่น 123/4 ม.1 ซ.สายใจ"
+                                value={addrParts.details}
+                                onChange={handleDetailsChange}
+                                className={inputClass('address')}
+                            />
+                        </div>
+                        <div className="relative z-[60]">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">ตำบล / แขวง</label>
+                            <InputThaiAddress.District
+                                value={addrParts.tumbol}
+                                onChange={handleThaiAddrChange('tumbol')}
+                                onSelect={handleAddressSelect}
+                                styleProps={{ className: inputClass('address') }}
+                            />
+                        </div>
+                        <div className="relative z-[50]">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">อำเภอ / เขต</label>
+                            <InputThaiAddress.Amphoe
+                                value={addrParts.amphoe}
+                                onChange={handleThaiAddrChange('amphoe')}
+                                onSelect={handleAddressSelect}
+                                styleProps={{ className: inputClass('address') }}
+                            />
+                        </div>
+                        <div className="relative z-[40]">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">จังหวัด</label>
+                            <InputThaiAddress.Province
+                                value={addrParts.province}
+                                onChange={handleThaiAddrChange('province')}
+                                onSelect={handleAddressSelect}
+                                styleProps={{ className: inputClass('address') }}
+                            />
+                        </div>
+                        <div className="relative z-[30]">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">รหัสไปรษณีย์</label>
+                            <InputThaiAddress.Zipcode
+                                value={addrParts.zipcode}
+                                onChange={handleThaiAddrChange('zipcode')}
+                                onSelect={handleAddressSelect}
+                                styleProps={{ className: inputClass('address') }}
+                            />
+                        </div>
+                    </div>
+                    {errors?.address && <p className="text-danger text-sm mt-3">กรุณาระบุที่อยู่ให้ครบถ้วน</p>}
                 </div>
             </div>
         </div>
