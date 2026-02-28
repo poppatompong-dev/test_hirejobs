@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
-import { InputThaiAddress } from 'thai-address-autocomplete-react'
+import { CreateInput } from 'thai-address-autocomplete-react'
+
+const InputThaiAddress = CreateInput()
 
 // Thai 13-digit citizen ID checksum validation
 function validateCitizenId(id) {
