@@ -5,6 +5,8 @@ import { generateExamCard } from '../utils/generateExamCard'
 import { exportToExcel } from '../utils/exportExcel'
 import { sendLineNotify, formatStatusMessage } from '../utils/lineNotify'
 import ExamCardTemplate from '../components/ExamCardTemplate'
+import ApplicationFormTemplate from '../components/ApplicationFormTemplate'
+import { generateApplicationForm } from '../utils/generateApplicationForm'
 import {
     LayoutDashboard, Users, Briefcase, Settings, LogOut, Search, FileSpreadsheet,
     Eye, CheckCircle2, XCircle, AlertTriangle, FileText, Printer, Trash2,
@@ -42,6 +44,11 @@ export default function AdminDashboard() {
     const [cardPos, setCardPos] = useState(null)
     const [generatingPdf, setGeneratingPdf] = useState(false)
     const cardRef = useRef(null)
+    const [appFormApp, setAppFormApp] = useState(null)
+    const [appFormPos, setAppFormPos] = useState(null)
+    const [showAppFormModal, setShowAppFormModal] = useState(false)
+    const [generatingAppFormPdf, setGeneratingAppFormPdf] = useState(false)
+
     // Position form
     const [posForm, setPosForm] = useState({ title: '', department: '', is_active: true, quota: '', salary_range: '', requirements: '', open_date: '', close_date: '' })
     const [editingPos, setEditingPos] = useState(null)
@@ -198,6 +205,21 @@ export default function AdminDashboard() {
         setGeneratingPdf(false); setShowCardModal(false)
         await writeAuditLog('generate_exam_card', cardApp.id, { exam_number: cardApp.exam_number })
     }, [cardApp, generatingPdf])
+
+    // ── App Form ──
+    async function handleGenerateAppForm(app) {
+        const pos = positions.find(p => p.id === app.position_id)
+        setAppFormApp(app); setAppFormPos(pos); setShowAppFormModal(true)
+    }
+
+    const handleAppFormReady = useCallback(async (el) => {
+        if (generatingAppFormPdf) return
+        setGeneratingAppFormPdf(true)
+        await new Promise(r => setTimeout(r, 500))
+        await generateApplicationForm(el, appFormApp)
+        setGeneratingAppFormPdf(false); setShowAppFormModal(false)
+        await writeAuditLog('generate_app_form', appFormApp.id, {})
+    }, [appFormApp, generatingAppFormPdf])
 
     // ── Excel ──
     const handleExportExcel = () => exportToExcel(filteredApps, positions, 'ผู้สมัครงาน')
@@ -608,6 +630,7 @@ export default function AdminDashboard() {
                                                         <td className="px-4 py-3">
                                                             <div className="flex items-center gap-1.5">
                                                                 <IconBtn icon={Eye} tip="ตรวจสอบ" color="blue" onClick={() => handleReview(app)} />
+                                                                <IconBtn icon={FileText} tip="พิมพ์ใบสมัคร" color="primary" onClick={() => handleGenerateAppForm(app)} />
                                                                 {app.status === 'pending' && (
                                                                     <>
                                                                         <IconBtn icon={CheckCircle2} tip="อนุมัติ" color="emerald" onClick={() => handleApprove(app.id)} />
@@ -1016,6 +1039,19 @@ export default function AdminDashboard() {
                     </div>
                     <div className="overflow-auto rounded-xl border border-gray-200">
                         <ExamCardTemplate application={cardApp} position={cardPos} onReady={handleCardReady} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3 text-center">PDF จะถูกดาวน์โหลดอัตโนมัติ</p>
+                </Modal>
+            )}
+            {/* Application Form Modal */}
+            {showAppFormModal && appFormApp && (
+                <Modal onClose={() => { if (!generatingAppFormPdf) setShowAppFormModal(false) }} large>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><FileText className="w-5 h-5 text-primary" /> ใบสมัคร</h3>
+                        {generatingAppFormPdf && <div className="flex items-center gap-2 text-primary text-sm"><div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> สร้าง PDF...</div>}
+                    </div>
+                    <div className="overflow-auto rounded-xl border border-gray-200" style={{ maxHeight: '70vh' }}>
+                        <ApplicationFormTemplate application={appFormApp} position={appFormPos} onReady={handleAppFormReady} />
                     </div>
                     <p className="text-xs text-gray-400 mt-3 text-center">PDF จะถูกดาวน์โหลดอัตโนมัติ</p>
                 </Modal>

@@ -87,6 +87,66 @@
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  /* Overrides for thai-address-autocomplete-react */
+  .thai-address-container {
+    position: relative;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .thai-address-container * {
+    pointer-events: auto;
+  }
+
+  .thai-address-container input {
+    width: 100%;
+    color: inherit;
+    background-color: transparent !important;
+    position: relative;
+    z-index: 60;
+    pointer-events: auto !important;
+  }
+
+  .thai-address-container>div>div {
+    /* dropdown container */
+    background-color: var(--color-card) !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+    overflow: hidden !important;
+    z-index: 100 !important;
+  }
+
+  html.dark .thai-address-container>div>div {
+    background-color: var(--color-surface-dark) !important;
+    border-color: #374151 !important;
+  }
+
+  .thai-address-container>div>div>div {
+    /* dropdown item */
+    padding: 10px 16px !important;
+    color: #1f2937 !important;
+    font-size: 0.875rem !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    transition: background-color 0.2s !important;
+    cursor: pointer !important;
+  }
+
+  html.dark .thai-address-container>div>div>div {
+    color: #f3f4f6 !important;
+    border-bottom-color: #374151 !important;
+  }
+
+  .thai-address-container>div>div>div:hover {
+    background-color: var(--color-primary-50) !important;
+    color: var(--color-primary-dark) !important;
+  }
+
+  html.dark .thai-address-container>div>div>div:hover {
+    background-color: rgba(0, 132, 61, 0.2) !important;
+    color: #4ade80 !important;
+  }
 }
 
 /* ── ANIMATIONS (unlayered is ok here — they don't conflict) ── */

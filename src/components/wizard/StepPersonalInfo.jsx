@@ -80,9 +80,9 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
     }
 
     const inputClass = (field) =>
-        `w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 ${errors?.[field]
-            ? 'border-danger bg-red-50'
-            : 'border-gray-200 focus:border-primary bg-white'
+        `w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-gray-800 dark:text-gray-100 ${errors?.[field]
+            ? 'border-danger bg-red-50 dark:bg-red-900/20'
+            : 'border-gray-200 dark:border-gray-700 focus:border-primary bg-white dark:bg-[#0d1a12]'
         }`
 
     return (
@@ -204,41 +204,49 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                                 className={inputClass('address')}
                             />
                         </div>
-                        <div className="relative z-[60]">
+                        <div className="relative pointer-events-auto z-[60]">
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">ตำบล / แขวง</label>
-                            <InputThaiAddress.District
-                                value={addrParts.tumbol}
-                                onChange={handleThaiAddrChange('tumbol')}
-                                onSelect={handleAddressSelect}
-                                styleProps={{ className: inputClass('address') }}
-                            />
+                            <div className="thai-address-container group">
+                                <InputThaiAddress.District
+                                    value={addrParts.tumbol}
+                                    onChange={handleThaiAddrChange('tumbol')}
+                                    onSelect={handleAddressSelect}
+                                    styleProps={{ className: inputClass('address') }}
+                                />
+                            </div>
                         </div>
-                        <div className="relative z-[50]">
+                        <div className="relative pointer-events-auto z-[50]">
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">อำเภอ / เขต</label>
-                            <InputThaiAddress.Amphoe
-                                value={addrParts.amphoe}
-                                onChange={handleThaiAddrChange('amphoe')}
-                                onSelect={handleAddressSelect}
-                                styleProps={{ className: inputClass('address') }}
-                            />
+                            <div className="thai-address-container group">
+                                <InputThaiAddress.Amphoe
+                                    value={addrParts.amphoe}
+                                    onChange={handleThaiAddrChange('amphoe')}
+                                    onSelect={handleAddressSelect}
+                                    styleProps={{ className: inputClass('address') }}
+                                />
+                            </div>
                         </div>
-                        <div className="relative z-[40]">
+                        <div className="relative pointer-events-auto z-[40]">
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">จังหวัด</label>
-                            <InputThaiAddress.Province
-                                value={addrParts.province}
-                                onChange={handleThaiAddrChange('province')}
-                                onSelect={handleAddressSelect}
-                                styleProps={{ className: inputClass('address') }}
-                            />
+                            <div className="thai-address-container group">
+                                <InputThaiAddress.Province
+                                    value={addrParts.province}
+                                    onChange={handleThaiAddrChange('province')}
+                                    onSelect={handleAddressSelect}
+                                    styleProps={{ className: inputClass('address') }}
+                                />
+                            </div>
                         </div>
-                        <div className="relative z-[30]">
+                        <div className="relative pointer-events-auto z-[30]">
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">รหัสไปรษณีย์</label>
-                            <InputThaiAddress.Zipcode
-                                value={addrParts.zipcode}
-                                onChange={handleThaiAddrChange('zipcode')}
-                                onSelect={handleAddressSelect}
-                                styleProps={{ className: inputClass('address') }}
-                            />
+                            <div className="thai-address-container group">
+                                <InputThaiAddress.Zipcode
+                                    value={addrParts.zipcode}
+                                    onChange={handleThaiAddrChange('zipcode')}
+                                    onSelect={handleAddressSelect}
+                                    styleProps={{ className: inputClass('address') }}
+                                />
+                            </div>
                         </div>
                     </div>
                     {errors?.address && <p className="text-danger text-sm mt-3">กรุณาระบุที่อยู่ให้ครบถ้วน</p>}

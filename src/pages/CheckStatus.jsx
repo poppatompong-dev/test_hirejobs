@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { generateExamCard } from '../utils/generateExamCard'
 import ExamCardTemplate from '../components/ExamCardTemplate'
+import ApplicationFormTemplate from '../components/ApplicationFormTemplate'
+import { generateApplicationForm } from '../utils/generateApplicationForm'
 import { Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle, AlertTriangle, Download, Printer } from 'lucide-react'
 
 const STATUS_MAP = {
@@ -20,6 +22,8 @@ export default function CheckStatus() {
     const [error, setError] = useState('')
     const [showCard, setShowCard] = useState(false)
     const [generatingPdf, setGeneratingPdf] = useState(false)
+    const [showAppForm, setShowAppForm] = useState(false)
+    const [generatingAppFormPdf, setGeneratingAppFormPdf] = useState(false)
 
     async function handleSearch(e) {
         e.preventDefault()
@@ -46,6 +50,16 @@ export default function CheckStatus() {
         await generateExamCard(el, result)
         setGeneratingPdf(false)
         setShowCard(false)
+    }
+
+    const handleDownloadAppForm = () => { setShowAppForm(true) }
+    const handleAppFormReady = async (el) => {
+        if (generatingAppFormPdf) return
+        setGeneratingAppFormPdf(true)
+        await new Promise(r => setTimeout(r, 500))
+        await generateApplicationForm(el, result)
+        setGeneratingAppFormPdf(false)
+        setShowAppForm(false)
     }
 
     const statusInfo = result ? STATUS_MAP[result.status] || STATUS_MAP.pending : null
@@ -142,7 +156,7 @@ export default function CheckStatus() {
 
                             {/* Download Card Button */}
                             {result.status === 'approved' && (
-                                <div className="px-6 pb-6">
+                                <div className="px-6 pb-4">
                                     <button onClick={handleDownloadCard} disabled={generatingPdf}
                                         className="w-full py-3.5 bg-gradient-to-r from-primary to-primary-light text-white font-bold rounded-xl shadow-lg hover:shadow-primary/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2.5 text-lg disabled:opacity-50">
                                         {generatingPdf ? (
@@ -153,6 +167,18 @@ export default function CheckStatus() {
                                     </button>
                                 </div>
                             )}
+
+                            {/* Download Application Form Button (Always visible if exists) */}
+                            <div className={`px-6 ${result.status === 'approved' ? 'pb-6' : 'pb-6 pt-2'}`}>
+                                <button onClick={handleDownloadAppForm} disabled={generatingAppFormPdf}
+                                    className="w-full py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2.5 text-base disabled:opacity-50">
+                                    {generatingAppFormPdf ? (
+                                        <><div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin" /> กำลังสร้าง PDF ใบสมัคร...</>
+                                    ) : (
+                                        <><FileText className="w-4 h-4" /> ดาวน์โหลดใบสมัคร (PDF)</>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -161,6 +187,12 @@ export default function CheckStatus() {
                 {showCard && result && (
                     <div className="fixed left-[-9999px] top-0">
                         <ExamCardTemplate application={result} position={position} onReady={handleCardReady} />
+                    </div>
+                )}
+                {/* Hidden app form for pdf generation */}
+                {showAppForm && result && (
+                    <div className="fixed left-[-9999px] top-0">
+                        <ApplicationFormTemplate application={result} position={position} onReady={handleAppFormReady} />
                     </div>
                 )}
             </main>
