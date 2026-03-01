@@ -6,6 +6,7 @@ import StepPersonalInfo from '../components/wizard/StepPersonalInfo'
 import StepEducation from '../components/wizard/StepEducation'
 import StepDocuments from '../components/wizard/StepDocuments'
 import StepSignature from '../components/wizard/StepSignature'
+import Footer from '../components/Footer'
 
 const STEPS = [
     { label: 'เลือกตำแหน่ง', icon: '💼' },
@@ -263,7 +264,21 @@ export default function ApplicationWizard() {
                 </div>
             </header>
 
-            <main className="max-w-3xl mx-auto px-4 py-8">
+            <main className="max-w-3xl mx-auto px-4 py-8 flex-grow">
+                {/* Progress Bar */}
+                <div className="mb-8 bg-white dark:bg-[#151f1a] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-[#1e2a24]">
+                    <div className="flex justify-between text-sm font-semibold mb-2">
+                        <span className="text-gray-600 dark:text-gray-300">ความคืบหน้าการสมัคร</span>
+                        <span className="text-primary">{Math.round((step / (STEPS.length - 1)) * 100)}%</span>
+                    </div>
+                    <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-primary-light to-primary transition-all duration-500 ease-out"
+                            style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+                        />
+                    </div>
+                </div>
+
                 {/* Stepper */}
                 <div className="flex items-center justify-center mb-10">
                     {STEPS.map((s, i) => (
@@ -371,6 +386,8 @@ export default function ApplicationWizard() {
                     </div>
                 </div>
             </main>
+
+            <Footer />
         </div>
     )
 }

@@ -23,6 +23,22 @@ export default function StepEducation({ data, onChange, errors }) {
         { value: 'autism', label: 'พิการทางออทิสติก' },
     ]
 
+    const occupations = [
+        'ว่างงาน',
+        'พนักงานบริษัทเอกชน',
+        'ข้าราชการ/เจ้าหน้าที่รัฐ/รัฐวิสาหกิจ',
+        'ธุรกิจส่วนตัว/ค้าขาย',
+        'รับจ้างทั่วไป',
+        'เกษตรกรรม',
+        'นักเรียน/นักศึกษา',
+        'ฟรีแลนซ์/อาชีพอิสระ',
+        'อื่นๆ'
+    ]
+
+    const currentYearBE = new Date().getFullYear() + 543
+    const years = Array.from({ length: 60 }, (_, i) => currentYearBE - i)
+
+
     return (
         <div className="space-y-6">
             <div className="text-center mb-8">
@@ -100,26 +116,32 @@ export default function StepEducation({ data, onChange, errors }) {
 
                 {/* Graduation Date */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">สำเร็จการศึกษาเมื่อ</label>
-                    <input
-                        type="text"
-                        placeholder="เช่น พ.ศ. 2565"
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">สำเร็จการศึกษาปี (พ.ศ.)</label>
+                    <select
                         value={data.graduation_date || ''}
                         onChange={(e) => onChange({ graduation_date: e.target.value })}
                         className={inputClass('graduation_date')}
-                    />
+                    >
+                        <option value="">-- เลือกปี พ.ศ. ที่สำเร็จการศึกษา --</option>
+                        {years.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Current Occupation */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">อาชีพปัจจุบัน</label>
-                    <input
-                        type="text"
-                        placeholder="เช่น พนักงานบริษัท"
+                    <select
                         value={data.current_occupation || ''}
                         onChange={(e) => onChange({ current_occupation: e.target.value })}
                         className={inputClass('current_occupation')}
-                    />
+                    >
+                        <option value="">-- เลือกอาชีพปัจจุบัน --</option>
+                        {occupations.map(occ => (
+                            <option key={occ} value={occ}>{occ}</option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Work Place */}

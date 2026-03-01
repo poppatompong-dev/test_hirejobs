@@ -30,6 +30,41 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
     const age = useMemo(() => calculateAge(data.birth_date), [data.birth_date])
     const idValid = useMemo(() => data.citizen_id ? validateCitizenId(data.citizen_id) : null, [data.citizen_id])
 
+    // Name splitting
+    const [nameParts, setNameParts] = useState({
+        prefix: '',
+        firstName: '',
+        lastName: ''
+    })
+
+    useEffect(() => {
+        if (data.full_name && !nameParts.firstName) {
+            let prefix = ''
+            let rest = data.full_name
+            const prefixes = ['นาย', 'นางสาว', 'นาง']
+            for (const p of prefixes) {
+                if (data.full_name.startsWith(p)) {
+                    prefix = p
+                    rest = data.full_name.substring(p.length).trim()
+                    break
+                }
+            }
+            const parts = rest.split(' ')
+            const firstName = parts[0] || ''
+            const lastName = parts.slice(1).join(' ') || ''
+            setNameParts({ prefix, firstName, lastName })
+        }
+    }, [])
+
+    const handleNameChange = (field) => (e) => {
+        const val = e.target.value
+        setNameParts(prev => {
+            const next = { ...prev, [field]: val }
+            onChange({ full_name: `${next.prefix}${next.firstName} ${next.lastName}`.trim() })
+            return next
+        })
+    }
+
     // Address splitting for autocomplete
     const [addrParts, setAddrParts] = useState({
         details: '', // บ้านเลขที่ หมู่ ซอย ถนน
@@ -73,9 +108,10 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
         onChange({ address: fullAddr.replace(/ต. อ. จ. /g, '') }) // clean if empty
     }
 
-    const handleThaiAddrChange = (field) => (e) => {
-        const val = e.target.value
-        setAddrParts(p => ({ ...p, [field]: val }))
+    const handleThaiAddrChange = (field) => (val) => {
+        // thai-address-autocomplete-react returns a string value, not an event object
+        const finalVal = typeof val === 'string' ? val : (val?.target?.value || '')
+        setAddrParts(p => ({ ...p, [field]: finalVal }))
         // Not calling onChange yet, wait for user to select from dropdown to get full string
     }
 
@@ -126,15 +162,40 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                 {/* Full Name */}
                 <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                        ชื่อ-นามสกุล (นาย/นาง/นางสาว) <span className="text-danger">*</span>
+                        ชื่อ-นามสกุล <span className="text-danger">*</span>
                     </label>
-                    <input
-                        type="text"
-                        placeholder="เช่น นายสมชาย ใจดี"
-                        value={data.full_name || ''}
-                        onChange={(e) => onChange({ full_name: e.target.value })}
-                        className={inputClass('full_name')}
-                    />
+                    <div className="grid grid-cols-12 gap-4">
+                        <div className="col-span-12 md:col-span-3">
+                            <select
+                                value={nameParts.prefix || ''}
+                                onChange={handleNameChange('prefix')}
+                                className={inputClass('full_name')}
+                            >
+                                <option value="">-- คำนำหน้า --</option>
+                                <option value="นาย">นาย</option>
+                                <option value="นาง">นาง</option>
+                                <option value="นางสาว">นางสาว</option>
+                            </select>
+                        </div>
+                        <div className="col-span-12 md:col-span-4">
+                            <input
+                                type="text"
+                                placeholder="ชื่อ (ไม่ต้องระบุคำนำหน้า)"
+                                value={nameParts.firstName || ''}
+                                onChange={handleNameChange('firstName')}
+                                className={inputClass('full_name')}
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-5">
+                            <input
+                                type="text"
+                                placeholder="นามสกุล"
+                                value={nameParts.lastName || ''}
+                                onChange={handleNameChange('lastName')}
+                                className={inputClass('full_name')}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Birth Date */}

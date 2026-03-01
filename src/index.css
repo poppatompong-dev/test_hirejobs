@@ -92,11 +92,6 @@
   .thai-address-container {
     position: relative;
     z-index: 50;
-    pointer-events: none;
-  }
-
-  .thai-address-container * {
-    pointer-events: auto;
   }
 
   .thai-address-container input {
@@ -105,7 +100,6 @@
     background-color: transparent !important;
     position: relative;
     z-index: 60;
-    pointer-events: auto !important;
   }
 
   .thai-address-container>div>div {
