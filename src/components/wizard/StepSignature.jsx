@@ -35,12 +35,12 @@ export default function StepSignature({ data, onChange, errors }) {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-4">
                     <PenTool className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">ลายมือชื่อผู้สมัคร</h3>
-                <p className="text-gray-500 mt-2">กรุณาลงลายมือชื่อของท่านให้ชัดเจน เพื่อใช้แนบท้ายใบสมัคร</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">ลายมือชื่อผู้สมัคร</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">กรุณาลงลายมือชื่อของท่านให้ชัดเจน เพื่อใช้แนบท้ายใบสมัคร</p>
             </div>
 
-            <div className={`border-2 rounded-2xl overflow-hidden bg-white relative max-w-2xl mx-auto
-                ${errors?.signature ? 'border-danger' : 'border-gray-200 focus-within:border-primary'}`}>
+            <div className={`border-2 rounded-2xl overflow-hidden bg-white dark:bg-[#151f1a] relative max-w-2xl mx-auto
+                ${errors?.signature ? 'border-danger' : 'border-gray-200 dark:border-gray-700 focus-within:border-primary'}`}>
 
                 {/* Signature Canvas */}
                 <div className="w-full h-64 cursor-crosshair touch-none" onMouseUp={saveSignature} onTouchEnd={saveSignature}>
@@ -72,7 +72,7 @@ export default function StepSignature({ data, onChange, errors }) {
 
             {errors?.signature && (
                 <div className="max-w-2xl mx-auto text-center">
-                    <p className="text-danger text-sm bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-danger text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-800">
                         กรุณาลงลายมือชื่อก่อนดำเนินการต่อ
                     </p>
                 </div>

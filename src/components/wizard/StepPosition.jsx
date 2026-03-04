@@ -32,8 +32,8 @@ export default function StepPosition({ data, onChange }) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">เลือกตำแหน่งที่ต้องการสมัคร</h3>
-                <p className="text-gray-500 mt-2">กรุณาเลือกตำแหน่งงานที่ท่านสนใจ</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">เลือกตำแหน่งที่ต้องการสมัคร</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">กรุณาเลือกตำแหน่งงานที่ท่านสนใจ</p>
             </div>
 
             {loading ? (
@@ -44,7 +44,7 @@ export default function StepPosition({ data, onChange }) {
                 <div className="space-y-6">
                     {Object.entries(grouped).map(([dept, posItems]) => (
                         <div key={dept}>
-                            <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                                 <span className="w-2 h-2 bg-primary rounded-full" />
                                 {dept}
                             </h4>
@@ -54,13 +54,13 @@ export default function StepPosition({ data, onChange }) {
                                         key={pos.id}
                                         className={`block p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${data.position_id === pos.id
                                                 ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                                                : 'border-gray-200 hover:border-primary/40 bg-white'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-primary/40 bg-white dark:bg-[#0d1a12]'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${data.position_id === pos.id
                                                     ? 'border-primary bg-primary'
-                                                    : 'border-gray-300'
+                                                    : 'border-gray-300 dark:border-gray-600'
                                                 }`}>
                                                 {data.position_id === pos.id && (
                                                     <div className="w-2 h-2 bg-white rounded-full" />
@@ -75,8 +75,8 @@ export default function StepPosition({ data, onChange }) {
                                                 className="sr-only"
                                             />
                                             <div>
-                                                <p className="font-semibold text-gray-800">{pos.title}</p>
-                                                <p className="text-sm text-gray-500">{pos.department}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-white">{pos.title}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{pos.department}</p>
                                             </div>
                                         </div>
                                     </label>

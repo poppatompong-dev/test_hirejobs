@@ -1,7 +1,8 @@
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import ClockTowerScene from '../components/ClockTowerScene'
+import { X, Printer, ChevronRight, Briefcase, Building2, Users, Calendar, DollarSign, BookOpen, Clock, ExternalLink } from 'lucide-react'
 
 function ClockTowerLoading() {
     return (
@@ -20,17 +21,39 @@ function ClockTowerLoading() {
 export default function LandingPage() {
     const [positions, setPositions] = useState([])
     const [loading, setLoading] = useState(true)
+    const [selectedPos, setSelectedPos] = useState(null)
+    const printRef = useRef(null)
+
+    const fetchPositions = async () => {
+        const { data, error } = await supabase
+            .from('positions')
+            .select('*')
+            .eq('is_active', true)
+            .order('department')
+        if (!error && data) setPositions(data)
+        setLoading(false)
+    }
+
+    const handlePrint = () => {
+        const el = printRef.current
+        if (!el) return
+        const win = window.open('', '_blank')
+        win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>ประกาศรับสมัคร - ${selectedPos?.title}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>body{font-family:'Sarabun',sans-serif;margin:24px;color:#1a1a1a;} h1,h2,h3{color:#00843D;} table{width:100%;border-collapse:collapse;margin:10px 0;} td,th{border:1px solid #ccc;padding:8px 12px;text-align:left;} th{background:#f0f7f3;} @media print{button{display:none}}</style>
+        </head><body><button onclick="window.print()" style="margin-bottom:16px;padding:8px 20px;background:#00843D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Sarabun,sans-serif;font-size:14px;">🖨️ พิมพ์</button>${el.innerHTML}</body></html>`)
+        win.document.close()
+        win.focus()
+    }
 
     useEffect(() => {
-        async function fetchPositions() {
-            const { data, error } = await supabase
-                .from('positions')
-                .select('*')
-                .order('department')
-            if (!error && data) setPositions(data)
-            setLoading(false)
-        }
         fetchPositions()
+        const channel = supabase.channel('public:positions')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'positions' }, (payload) => {
+                fetchPositions()
+            })
+            .subscribe()
+        return () => { supabase.removeChannel(channel) }
     }, [])
 
     return (
@@ -192,12 +215,12 @@ export default function LandingPage() {
                     ) : (
                         <div className="grid gap-3 md:grid-cols-2">
                             {positions.map((pos, index) => (
-                                <div
+                                <button
                                     key={pos.id}
-                                    className="group flex items-center gap-4 bg-white/4 hover:bg-white/8 border border-white/10 hover:border-primary/40 rounded-xl p-5 transition-all duration-250 cursor-pointer"
+                                    onClick={() => setSelectedPos(pos)}
+                                    className="group flex items-center gap-4 bg-white/4 hover:bg-white/8 border border-white/10 hover:border-[#D4AF37]/50 rounded-xl p-5 transition-all duration-250 cursor-pointer text-left w-full hover:scale-[1.01]"
                                     style={{ animationDelay: `${index * 0.05}s` }}
                                 >
-                                    {/* Position number */}
                                     <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center text-primary-light text-sm font-bold">
                                         {index + 1}
                                     </div>
@@ -206,16 +229,18 @@ export default function LandingPage() {
                                             {pos.title}
                                         </h3>
                                         <p className="text-white/45 text-xs mt-0.5 flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
+                                            <Building2 className="w-3 h-3 flex-shrink-0" />
                                             {pos.department}
                                         </p>
+                                        {pos.salary_range && (
+                                            <p className="text-[#D4AF37]/60 text-xs mt-1">{pos.salary_range}</p>
+                                        )}
                                     </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white/25 group-hover:text-primary-light transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <ChevronRight className="w-4 h-4 text-white/25 group-hover:text-[#D4AF37] transition-colors" />
+                                        <span className="text-[10px] text-primary-light/60">ดูรายละเอียด</span>
+                                    </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -223,7 +248,7 @@ export default function LandingPage() {
                     {/* CTA */}
                     <div className="text-center mt-12 pt-10 border-t border-white/8">
                         <p className="text-white/40 text-sm mb-5">
-                            หากไม่แน่ใจ สามารถสอบถามได้ที่ฝ่ายบุคลากร เทศบาลเมืองอุทัยธานี โทร. 056-513-xxx
+                            หากไม่แน่ใจ สามารถสอบถามได้ที่ฝ่ายบุคลากร เทศบาลเมืองอุทัยธานี โทร. 056-511-061
                         </p>
                         <Link
                             to="/consent"
@@ -237,6 +262,96 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* ── POSITION DETAIL MODAL ── */}
+            {selectedPos && (
+                <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedPos(null)}>
+                    <div
+                        className="relative bg-white dark:bg-[#151f1a] w-full sm:max-w-2xl max-h-[90vh] sm:rounded-3xl rounded-t-3xl overflow-y-auto shadow-2xl flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white dark:bg-[#151f1a] border-b border-gray-100 dark:border-[#1e2a24] px-6 py-4 flex items-start justify-between gap-3 z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <Briefcase className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-extrabold text-gray-900 dark:text-white leading-snug">{selectedPos.title}</h2>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                        <Building2 className="w-3 h-3" />{selectedPos.department}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedPos(null)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#1e2a24] text-gray-400 transition-colors flex-shrink-0">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Printable content */}
+                        <div ref={printRef} className="px-6 py-5 space-y-5">
+                            {/* Info grid */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: 'สังกัด', value: selectedPos.department, icon: Building2 },
+                                    { label: 'จำนวนรับ', value: selectedPos.quota ? `${selectedPos.quota} อัตรา` : 'ไม่ระบุ', icon: Users },
+                                    { label: 'อัตราค่าจ้าง', value: selectedPos.salary_range || 'ไม่ระบุ', icon: DollarSign },
+                                    { label: 'เปิดรับสมัคร', value: selectedPos.open_date ? new Date(selectedPos.open_date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'ไม่ระบุ', icon: Calendar },
+                                    { label: 'ปิดรับสมัคร', value: selectedPos.close_date ? new Date(selectedPos.close_date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'ไม่ระบุ', icon: Clock },
+                                ].map(({ label, value, icon: Icon }) => (
+                                    <div key={label} className="bg-gray-50 dark:bg-[#0d1a12] rounded-xl p-3">
+                                        <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500 text-xs mb-1">
+                                            <Icon className="w-3.5 h-3.5" />
+                                            {label}
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-white">{value}</p>
+                                    </div>
+                                ))}
+                                {selectedPos.close_date && new Date(selectedPos.close_date) < new Date() && (
+                                    <div className="col-span-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2">
+                                        <p className="text-red-600 dark:text-red-400 text-sm font-semibold">⚠️ หมดเขตรับสมัครแล้ว</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Requirements */}
+                            {selectedPos.requirements && (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <BookOpen className="w-4 h-4 text-primary" />
+                                        <h3 className="text-sm font-bold text-gray-800 dark:text-white">คุณสมบัติและเงื่อนไข</h3>
+                                    </div>
+                                    <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20 rounded-xl p-4">
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{selectedPos.requirements}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Contact */}
+                            <div className="bg-gray-50 dark:bg-[#0d1a12] rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400">
+                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">📞 สอบถามข้อมูลเพิ่มเติม</p>
+                                <p>ฝ่ายบุคลากร เทศบาลเมืองอุทัยธานี โทร. 056-511-061</p>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="sticky bottom-0 bg-white dark:bg-[#151f1a] border-t border-gray-100 dark:border-[#1e2a24] px-6 py-4 flex gap-3">
+                            <button
+                                onClick={handlePrint}
+                                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-[#1e2a24] text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e2a24] text-sm font-medium transition-all"
+                            >
+                                <Printer className="w-4 h-4" /> พิมพ์/ส่งออก
+                            </button>
+                            <Link
+                                to="/consent"
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition-all shadow-sm shadow-primary/20"
+                            >
+                                <ExternalLink className="w-4 h-4" /> ยื่นใบสมัครสำหรับตำแหน่งนี้
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── FOOTER ── */}
             <footer className="bg-[#030d07] border-t border-white/8 py-12 px-4 relative z-10">
@@ -258,13 +373,13 @@ export default function LandingPage() {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-10 gap-y-3 text-xs text-white/40">
                             <div>
                                 <p className="text-white/60 font-medium mb-0.5">ที่อยู่</p>
-                                <p>1 ถ.ศรีอุทัย อ.เมือง</p>
-                                <p>จ.อุทัยธานี 61000</p>
+                                <p>เลขที่ 147 ตำบลอุทัยใหม่</p>
+                                <p>อำเภอเมือง จังหวัดอุทัยธานี 61000</p>
                             </div>
                             <div>
                                 <p className="text-white/60 font-medium mb-0.5">ติดต่อ</p>
-                                <p>โทร. 056-513-036</p>
-                                <p>แฟกซ์. 056-513-037</p>
+                                <p>โทรศัพท์: 056-511-061</p>
+                                <p>โทรสาร: 056-511-061</p>
                             </div>
                             <div className="col-span-2 md:col-span-1">
                                 <p className="text-white/60 font-medium mb-0.5">ลิงก์ที่เกี่ยวข้อง</p>
@@ -276,7 +391,7 @@ export default function LandingPage() {
 
                     <div className="border-t border-white/8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/25">
                         <p>© {new Date().getFullYear()} เทศบาลเมืองอุทัยธานี สงวนลิขสิทธิ์ — ระบบรับสมัครงานออนไลน์</p>
-                        <p>พัฒนาโดยฝ่ายเทคโนโลยีสารสนเทศ</p>
+                        <p>พัฒนาระบบโดย <span className="text-white/40">นักวิชาการคอมพิวเตอร์ และ นักทรัพยากรบุคคล เทศบาลเมืองอุทัยธานี</span></p>
                     </div>
                 </div>
             </footer>

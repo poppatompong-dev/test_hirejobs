@@ -129,14 +129,14 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">ข้อมูลส่วนตัว</h3>
-                <p className="text-gray-500 mt-2">กรอกข้อมูลส่วนตัวของท่าน</p>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white">ข้อมูลส่วนตัว</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">กรอกข้อมูลส่วนตัวของท่าน</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Citizen ID */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                         เลขบัตรประจำตัวประชาชน <span className="text-danger">*</span>
                     </label>
                     <div className="relative">
@@ -161,7 +161,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
 
                 {/* Full Name */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                         ชื่อ-นามสกุล <span className="text-danger">*</span>
                     </label>
                     <div className="grid grid-cols-12 gap-4">
@@ -200,7 +200,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
 
                 {/* Birth Date */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                         วันเกิด <span className="text-danger">*</span>
                     </label>
                     <input
@@ -213,15 +213,15 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
 
                 {/* Auto Age */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">อายุ</label>
-                    <div className="px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-600">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">อายุ</label>
+                    <div className="px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0d1a12] text-gray-600 dark:text-gray-300">
                         {age !== '' ? `${age} ปี` : 'กรุณาเลือกวันเกิด'}
                     </div>
                 </div>
 
                 {/* Phone */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                         เบอร์โทรศัพท์ <span className="text-danger">*</span>
                     </label>
                     <input
@@ -236,7 +236,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
 
                 {/* Email */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">อีเมล</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">อีเมล</label>
                     <input
                         type="email"
                         placeholder="email@example.com"
@@ -248,15 +248,15 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
 
                 {/* Address */}
                 {/* Address Group */}
-                <div className="md:col-span-2 bg-gray-50/50 p-5 rounded-2xl border border-gray-100 mb-2">
-                    <label className="block text-[15px] font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="md:col-span-2 bg-gray-50/50 dark:bg-[#0d1a12]/50 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 mb-2">
+                    <label className="block text-[15px] font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                         <span className="w-1.5 h-4 bg-primary rounded-full"></span>
                         ที่อยู่ปัจจุบัน <span className="text-danger">*</span>
                     </label>
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">บ้านเลขที่ / หมู่ / ซอย / ถนน</label>
+                            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase">บ้านเลขที่ / หมู่ / ซอย / ถนน</label>
                             <input
                                 type="text"
                                 placeholder="เช่น 123/4 ม.1 ซ.สายใจ"
@@ -266,7 +266,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                             />
                         </div>
                         <div className="relative pointer-events-auto z-[60]">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">ตำบล / แขวง</label>
+                            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase">ตำบล / แขวง</label>
                             <div className="thai-address-container group">
                                 <InputThaiAddress.District
                                     value={addrParts.tumbol}
@@ -277,7 +277,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                             </div>
                         </div>
                         <div className="relative pointer-events-auto z-[50]">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">อำเภอ / เขต</label>
+                            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase">อำเภอ / เขต</label>
                             <div className="thai-address-container group">
                                 <InputThaiAddress.Amphoe
                                     value={addrParts.amphoe}
@@ -288,7 +288,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                             </div>
                         </div>
                         <div className="relative pointer-events-auto z-[40]">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">จังหวัด</label>
+                            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase">จังหวัด</label>
                             <div className="thai-address-container group">
                                 <InputThaiAddress.Province
                                     value={addrParts.province}
@@ -299,7 +299,7 @@ export default function StepPersonalInfo({ data, onChange, errors }) {
                             </div>
                         </div>
                         <div className="relative pointer-events-auto z-[30]">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">รหัสไปรษณีย์</label>
+                            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase">รหัสไปรษณีย์</label>
                             <div className="thai-address-container group">
                                 <InputThaiAddress.Zipcode
                                     value={addrParts.zipcode}
